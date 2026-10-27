@@ -169,3 +169,10 @@ a:hover { color: var(--accent-ink); }
 .strip::-webkit-scrollbar { display: none; }
 .relcard { flex: 0 0 72%; scroll-snap-align: start; scroll-margin-left: 14px; display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--feed); min-width: 0; }
 .relcard .relhl { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* Suche */
+.search { padding: 2px 16px 10px; }
+.search .field { width: 100%; border-radius: 22px; padding: 0 16px; background: var(--chip); border-color: transparent; }
+.hits { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 2px 4px 0; font-size: 14px; font-weight: 600; color: var(--ink); }
+.follow { flex: none; min-height: 36px; padding: 0 14px; border: 0; border-radius: 18px; background: var(--accent-strong); color: #FFFFFF; font: 600 13px var(--sans); }
+.feedback { margin: 0 4px; padding: 10px 12px; border-radius: 10px; background: var(--accent-soft); color: var(--ink); font-size: 13px; line-height: 1.45; }

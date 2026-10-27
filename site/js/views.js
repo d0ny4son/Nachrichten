@@ -32,7 +32,7 @@ function initials(name) {
 function sourceIcon(item, name) {
   let icon = "";
   try {
-    const u = new URL(item.link);
+    const u = new URL(item.site || item.link);
     if (u.protocol === "https:" || u.protocol === "http:") {
       icon = `<img class="favicon" src="${escapeHtml(u.origin)}/favicon.ico" alt="" referrerpolicy="no-referrer" onload="this.classList.add('ok')" onerror="this.remove()">`;
     }
@@ -43,7 +43,7 @@ function sourceIcon(item, name) {
 }
 
 function srcRow(item, sources, now, extra = "") {
-  const name = sources[item.source]?.name || item.source;
+  const name = item.publisher || sources[item.source]?.name || item.source;
   return `<div class="src">${sourceIcon(item, name)}<span class="srcname">${escapeHtml(name)}</span>${
     item.plus ? '<span class="plus">Plus</span>' : ""
   }<span class="time">· ${relativeTime(item.published, now)}</span>${extra}</div>`;
@@ -105,7 +105,22 @@ export function aktuellView(stories, tab, ctx) {
     ? shown.map((s) => storyCard(s, ctx.sources, ctx)).join("")
     : '<p class="empty">Gerade keine Meldungen in diesem Bereich.</p>';
   const more = stories.length > limit ? '<button class="more-btn" data-more>Weitere Meldungen</button>' : "";
-  return `${header("Nachrichten", ctx)}<nav class="tabs" aria-label="Region">${tabs}</nav><main class="feed">${cards}${more}</main>${bottomNav("aktuell")}`;
+  const search = `<form class="search" role="search" onsubmit="return false"><label class="sr" for="q">Suchen</label><input id="q" class="field" type="search" inputmode="search" autocomplete="off" placeholder="Suchen, z. B. Klima" value="${escapeHtml(ctx.query || "")}"></form>`;
+  return `${header("Nachrichten", ctx)}${search}<nav class="tabs" aria-label="Region">${tabs}</nav><main class="feed">${cards}${more}</main>${bottomNav("aktuell")}`;
+}
+
+const TOPIC_HINT =
+  "Für eine Suche über die 11 Medien hinaus muss das Thema in die Themen-Liste: im Projekt config/sources.yaml unter „themen:“ eintragen – oder Claude Bescheid geben.";
+
+export function searchResults(stories, query, ctx) {
+  const q = String(query).trim();
+  const term = q.toLowerCase();
+  if (!stories.length) {
+    return `<p class="hits">Keine Treffer für „${escapeHtml(q)}“ in den letzten 48 Stunden.</p><p class="hint">${TOPIC_HINT}</p>`;
+  }
+  const follow = (ctx.keywords || []).includes(term) ? "" : `<button class="follow" data-follow="${escapeHtml(term)}">Thema folgen</button>`;
+  const cards = stories.slice(0, 50).map((s) => storyCard(s, ctx.sources, ctx)).join("");
+  return `<div class="hits"><span>${stories.length} Treffer für „${escapeHtml(q)}“</span>${follow}</div>${cards}`;
 }
 
 export function storyView(story, sources, mediaType, ctx) {
@@ -140,7 +155,16 @@ function chipList(values, field) {
     .join("");
 }
 
-export function interessenView(settings) {
+export function interessenView(settings, info = null) {
+  const feedback = info
+    ? `<p class="feedback" role="status">${
+        info.hits
+          ? `„${escapeHtml(info.term)}“: gerade ${info.hits} Meldung${info.hits === 1 ? "" : "en"} – siehe „Für dich“.`
+          : info.listed
+            ? `„${escapeHtml(info.term)}“ steht schon in der Themen-Liste, gerade gibt es aber keine Meldung dazu.`
+            : `„${escapeHtml(info.term)}“: gerade keine Meldung. ${TOPIC_HINT}`
+      }</p>`
+    : "";
   const cats = Object.entries(CATEGORY_LABELS)
     .map(
       ([k, l]) =>
@@ -169,7 +193,7 @@ export function interessenView(settings) {
   return `<header class="top"><h1 class="brand">Interessen</h1></header><main class="body">
 <h2 class="sec">Darstellung</h2><div class="segs" role="radiogroup" aria-label="Darstellung">${themes}</div>
 <h2 class="sec">Kategorien</h2><div class="panel">${cats}</div>
-<h2 class="sec">Stichworte</h2><div class="panel">${form("keywords", "Neues Stichwort", "Neues Stichwort, z. B. Klima", "Folgen")}<div class="kws">${chipList(settings.keywords, "keywords")}</div></div>
+<h2 class="sec">Stichworte</h2>${feedback}<div class="panel">${form("keywords", "Neues Stichwort", "Neues Stichwort, z. B. Klima", "Folgen")}<div class="kws">${chipList(settings.keywords, "keywords")}</div></div>
 <p class="hint">Stichworte werden in Überschriften und wichtigen Wörtern aller Meldungen gesucht, auch als Wortanfang.</p>
 <h2 class="sec">Themen ausblenden</h2><div class="panel">${form("hidden", "Thema ausblenden", "Thema, z. B. Fußball", "Ausblenden")}<div class="kws">${chipList(textHidden, "hidden")}</div>${hideCats}</div>
 <p class="hint">Ausgeblendetes verschwindet überall, auch unter Aktuell. Gespeichert wird nur auf diesem Gerät.</p>

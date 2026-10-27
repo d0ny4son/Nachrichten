@@ -27,8 +27,18 @@ export function byRegion(stories, tab) {
   return tab === "alle" ? stories : stories.filter((s) => s.region === tab);
 }
 
+// Treffer der Themen-Suche gehören nicht in die Top-Meldungen, nur in „Für dich“ und die Suche
 export function aktuell(data, tab, settings) {
-  return byRegion(data.stories, tab).filter((s) => !isHidden(s, settings.hidden));
+  return byRegion(data.stories, tab).filter((s) => !s.topic_only && !isHidden(s, settings.hidden));
+}
+
+const byLatest = (a, b) => (a.latest < b.latest ? 1 : a.latest > b.latest ? -1 : 0);
+
+export function searchStories(data, query, settings) {
+  if (!String(query || "").trim()) return [];
+  return data.stories
+    .filter((s) => !isHidden(s, settings.hidden) && s.items.some((it) => matchesTerm(it, query)))
+    .sort(byLatest);
 }
 
 export function fuerDich(data, settings) {
@@ -43,7 +53,7 @@ export function fuerDich(data, settings) {
     }
     if (reason) out.push({ story, reason });
   }
-  return out.sort((a, b) => (a.story.latest < b.story.latest ? 1 : a.story.latest > b.story.latest ? -1 : 0));
+  return out.sort((a, b) => byLatest(a.story, b.story));
 }
 
 export function itemsByMediaType(story, sources, type) {

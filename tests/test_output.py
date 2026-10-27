@@ -29,7 +29,8 @@ def test_output_schema_and_sorting():
     assert out["sources"]["a"] == {"name": "Quelle A", "media_type": "zeitung"}
     assert [s["id"] for s in out["stories"]] == ["s2", "s1"]
     top = out["stories"][0]
-    assert set(top) == {"id", "score", "region", "categories", "latest", "lead", "items"}
+    assert set(top) == {"id", "score", "region", "categories", "latest", "lead", "topic_only", "items"}
+    assert top["topic_only"] is False
     assert top["lead"] == "i1"
     assert top["categories"] == ["wirtschaft"]
     assert [i["id"] for i in top["items"]] == ["i2", "i1"]

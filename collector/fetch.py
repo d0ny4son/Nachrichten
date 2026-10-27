@@ -7,7 +7,7 @@ import os
 import re
 from datetime import datetime, timezone
 from html.parser import HTMLParser
-from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+from urllib.parse import parse_qsl, quote_plus, urlencode, urlsplit, urlunsplit
 
 import feedparser
 import requests
@@ -167,3 +167,62 @@ def dedupe_items(items: list[Item]) -> list[Item]:
         if not cur.has_date and it.has_date:
             cur.published, cur.has_date = it.published, True
     return list(merged.values())
+
+
+TOPIC_SOURCE_ID = "themen"
+
+
+def topic_feed_url(term: str) -> str:
+    """Google-News-Suche nach einem Thema, nur Meldungen der letzten 2 Tage, deutschsprachig."""
+    return f"https://news.google.com/rss/search?q={quote_plus(term + ' when:2d')}&hl=de&gl=DE&ceid=DE:de"
+
+
+def parse_topic_feed(data: bytes, term: str, now: datetime, first_seen: dict[str, str]) -> list[Item]:
+    parsed = feedparser.parse(data)
+    if not parsed.entries and (parsed.bozo or not parsed.get("version")):
+        reason = parsed.get("bozo_exception")
+        raise FeedParseError(type(reason).__name__ if reason else "kein RSS/Atom")
+    items: list[Item] = []
+    for e in parsed.entries:
+        link = (e.get("link") or "").strip()
+        title = re.sub(r"\s+", " ", (e.get("title") or "")).strip()
+        src = e.get("source") or {}
+        publisher = (src.get("title") or "").strip() or None
+        site = (src.get("href") or "").strip() or None
+        if site and not site.startswith(("http://", "https://")):
+            site = None
+        if publisher and title.endswith(f" - {publisher}"):
+            title = title[: -len(publisher) - 3].strip()
+        elif " - " in title:
+            title = title.rsplit(" - ", 1)[0].strip()
+        if not link.startswith(("http://", "https://")) or not title:
+            continue
+        try:
+            iid = item_id(link)
+        except ValueError:
+            continue
+        pub = _published(e)
+        has_date = pub is not None
+        if pub is None:
+            seen = first_seen.get(iid)
+            pub = datetime.fromisoformat(seen) if seen else now
+        items.append(
+            Item(
+                id=iid,
+                source_id=TOPIC_SOURCE_ID,
+                title=title,
+                link=link,
+                published=pub,
+                image=None,
+                regions=set(),
+                categories=set(),
+                plus=False,
+                has_date=has_date,
+                stems=sorted(stems(title)),  # Google liefert keinen echten Anrisstext
+                keywords=keywords(title, ""),
+                publisher=publisher,
+                site=site,
+                topic=term,
+            )
+        )
+    return items
