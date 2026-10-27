@@ -10,6 +10,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 from .models import Item, Story
+from .region import guess_region
 
 WINDOW = timedelta(hours=48)
 MAX_GAP = timedelta(hours=24)
@@ -48,6 +49,8 @@ def choose_lead(items: list[Item], sim: np.ndarray) -> Item:
 
 def _region(items: list[Item]) -> str | None:
     counts = Counter(r for it in items for r in it.regions)
+    if not counts:  # kein Feed lieferte eine Region: aus Namen schätzen
+        counts = Counter(g for it in items if (g := guess_region(it.title, it.keywords)))
     if not counts:
         return None
     top = max(counts.values())
