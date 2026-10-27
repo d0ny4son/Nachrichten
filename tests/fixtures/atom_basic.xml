@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Atom-Beispiel</title>
+  <id>urn:beispiel</id>
+  <updated>2026-10-27T10:00:00Z</updated>
+  <entry>
+    <title>EU-Gipfel berät über Energiepolitik</title>
+    <link href="https://example.org/eu-gipfel"/>
+    <id>urn:beispiel:1</id>
+    <updated>2026-10-27T10:00:00Z</updated>
+    <summary>Die Mitgliedsstaaten streiten.</summary>
+  </entry>
+</feed>

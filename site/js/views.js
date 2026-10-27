@@ -1,0 +1,141 @@
+// Reine Funktionen, die HTML-Strings erzeugen. Alle Fremdtexte laufen durch escapeHtml().
+import { CATEGORY_LABELS, MEDIA_LABELS, relativeTime } from "./format.js";
+import { itemsByMediaType } from "./filters.js";
+
+const ESC = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+export const escapeHtml = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ESC[c]);
+
+const safeUrl = (u) => (/^https?:\/\//i.test(String(u || "")) ? escapeHtml(u) : "#");
+
+const ICONS = {
+  aktuell: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h10M7 13h10M7 17h6"/>',
+  fuerdich: '<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6-4.5-4.2 6.1-.7z"/>',
+  interessen: '<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>',
+  back: '<path d="M15 5l-7 7 7 7"/>',
+  x: '<path d="M6 6l12 12M18 6L6 18"/>',
+};
+const icon = (name, size = 22) =>
+  `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name]}</svg>`;
+
+function initials(name) {
+  const parts = String(name).split(/\s+/).filter(Boolean);
+  const raw = parts.length > 1 ? parts.map((p) => p[0]).join("").slice(0, 3) : String(name).slice(0, 2);
+  return escapeHtml(raw);
+}
+
+function srcRow(item, sources, now) {
+  const name = sources[item.source]?.name || item.source;
+  return `<div class="src"><span class="logo" aria-hidden="true">${initials(name)}</span><span class="srcname">${escapeHtml(name)}</span>${
+    item.plus ? '<span class="plus">Plus</span>' : ""
+  }<span class="time">· ${relativeTime(item.published, now)}</span></div>`;
+}
+
+const articleLink = (item, storyId, cls) =>
+  `<a class="${cls}" href="${safeUrl(item.link)}" target="_blank" rel="noopener" data-read="${escapeHtml(storyId)}">${escapeHtml(item.title)}</a>`;
+
+const distinctSources = (story) => new Set(story.items.map((i) => i.source)).size;
+
+export function storyCard(story, sources, ctx, reason = null) {
+  const lead = story.items.find((i) => i.id === story.lead) || story.items[0];
+  const others = story.items.filter((i) => i !== lead).slice(0, 2);
+  const read = (ctx.read || []).includes(story.id);
+  const n = distinctSources(story);
+  const thumb = lead.image ? `<img class="thumb" src="${safeUrl(lead.image)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : "";
+  return `<article class="card${read ? " read" : ""}">${reason ? `<p class="why">${escapeHtml(reason)}</p>` : ""}
+<div class="lead"><div class="leadtxt">${srcRow(lead, sources, ctx.now)}${articleLink(lead, story.id, "hl")}</div>${thumb}</div>${others
+    .map((it) => `<div class="relitem">${srcRow(it, sources, ctx.now)}${articleLink(it, story.id, "relhl")}</div>`)
+    .join("")}${
+    n > 1
+      ? `<a class="more" href="#story/${escapeHtml(story.id)}">Komplette Berichterstattung · ${n} Quellen <span aria-hidden="true">›</span></a>`
+      : ""
+  }</article>`;
+}
+
+export function bottomNav(active) {
+  const item = (key, label, href) =>
+    `<a class="navi${active === key ? " on" : ""}" href="${href}"${active === key ? ' aria-current="page"' : ""}><span class="pill">${icon(key)}</span>${label}</a>`;
+  return `<nav class="nav" aria-label="Hauptmenü">${item("aktuell", "Aktuell", "#aktuell/alle")}${item("fuerdich", "Für dich", "#fuerdich")}${item(
+    "interessen",
+    "Interessen",
+    "#interessen",
+  )}</nav>`;
+}
+
+function header(title, ctx) {
+  const stand = ctx.generatedAt ? `<p class="stand">Stand: ${relativeTime(ctx.generatedAt, ctx.now)}${ctx.hangs ? " – Aktualisierung hängt, siehe Anleitung" : ""}</p>` : "";
+  const banner = ctx.offline ? '<p class="banner" role="status">Offline – du siehst den zuletzt geladenen Stand.</p>' : "";
+  return `<header class="top"><h1 class="brand">${escapeHtml(title)}</h1></header>${stand}${banner}`;
+}
+
+export function aktuellView(stories, tab, ctx) {
+  const tabs = [
+    ["alle", "Alle"],
+    ["inland", "Inland"],
+    ["ausland", "Ausland"],
+  ]
+    .map(([k, l]) =>
+      k === tab ? `<a class="tab on" href="#aktuell/${k}" aria-current="page">${l}</a>` : `<a class="tab" href="#aktuell/${k}">${l}</a>`,
+    )
+    .join("");
+  const cards = stories.length
+    ? stories.map((s) => storyCard(s, ctx.sources, ctx)).join("")
+    : '<p class="empty">Gerade keine Meldungen in diesem Bereich.</p>';
+  return `${header("Nachrichten", ctx)}<nav class="tabs" aria-label="Region">${tabs}</nav><main class="feed">${cards}</main>${bottomNav("aktuell")}`;
+}
+
+export function storyView(story, sources, mediaType, ctx) {
+  const lead = story.items.find((i) => i.id === story.lead) || story.items[0];
+  const chips = Object.entries(MEDIA_LABELS)
+    .map(([k, l]) => `<a class="chip${k === mediaType ? " on" : ""}" href="#story/${escapeHtml(story.id)}/${k}"${k === mediaType ? ' aria-current="true"' : ""}>${l}</a>`)
+    .join("");
+  const items = itemsByMediaType(story, sources, mediaType);
+  const list = items.length
+    ? items.map((it) => `<div class="item">${srcRow(it, sources, ctx.now)}${articleLink(it, story.id, "ihl")}</div>`).join("")
+    : '<p class="empty">Keine Meldung dieses Medientyps.</p>';
+  return `<div class="bar"><a class="back" href="#aktuell/alle" aria-label="Zurück">${icon("back")}</a><p class="barlabel">Komplette Berichterstattung</p></div>
+<header class="head"><h1 class="title">${escapeHtml(lead.title)}</h1><p class="meta">${distinctSources(story)} Quellen · zuletzt aktualisiert ${relativeTime(
+    story.latest,
+    ctx.now,
+  )}</p></header><nav class="chips" aria-label="Quellen filtern">${chips}</nav><main class="list">${list}</main>`;
+}
+
+export function fuerDichView(entries, ctx) {
+  const body = entries.length
+    ? entries.map((e) => storyCard(e.story, ctx.sources, ctx, e.reason)).join("")
+    : '<p class="empty">Wähle unter Interessen Kategorien oder Stichworte.</p>';
+  return `${header("Für dich", ctx)}<main class="feed">${body}</main>${bottomNav("fuerdich")}`;
+}
+
+function chipList(values, field) {
+  return values
+    .map(
+      (v) =>
+        `<span class="kwchip">${escapeHtml(v)}<button class="x" data-remove="${field}" data-value="${escapeHtml(v)}" aria-label="${escapeHtml(v)} entfernen">${icon("x", 14)}</button></span>`,
+    )
+    .join("");
+}
+
+export function interessenView(settings) {
+  const cats = Object.entries(CATEGORY_LABELS)
+    .map(
+      ([k, l]) =>
+        `<label class="row">${l}<input type="checkbox" data-toggle-cat value="${k}"${settings.categories.includes(k) ? " checked" : ""}></label>`,
+    )
+    .join("");
+  const hideCats = Object.entries(CATEGORY_LABELS)
+    .map(
+      ([k, l]) =>
+        `<label class="row">${l} ausblenden<input type="checkbox" data-hide-cat="${k}"${settings.hidden.includes(`kat:${k}`) ? " checked" : ""}></label>`,
+    )
+    .join("");
+  const textHidden = settings.hidden.filter((h) => !h.startsWith("kat:"));
+  const form = (field, label, placeholder, button) =>
+    `<form class="add" data-add="${field}"><label class="sr" for="in-${field}">${label}</label><input id="in-${field}" class="field" name="value" type="text" autocomplete="off" placeholder="${placeholder}"><button class="btn" type="submit">${button}</button></form>`;
+  return `<header class="top"><h1 class="brand">Interessen</h1></header><main class="body">
+<h2 class="sec">Kategorien</h2><div class="panel">${cats}</div>
+<h2 class="sec">Stichworte</h2><div class="panel">${form("keywords", "Neues Stichwort", "Neues Stichwort, z. B. Klima", "Folgen")}<div class="kws">${chipList(settings.keywords, "keywords")}</div></div>
+<p class="hint">Stichworte werden in Überschriften und wichtigen Wörtern aller Meldungen gesucht, auch als Wortanfang.</p>
+<h2 class="sec">Themen ausblenden</h2><div class="panel">${form("hidden", "Thema ausblenden", "Thema, z. B. Fußball", "Ausblenden")}<div class="kws">${chipList(textHidden, "hidden")}</div>${hideCats}</div>
+<p class="hint">Ausgeblendetes verschwindet überall, auch unter Aktuell. Gespeichert wird nur auf diesem Gerät.</p>
+</main>${bottomNav("interessen")}`;
+}

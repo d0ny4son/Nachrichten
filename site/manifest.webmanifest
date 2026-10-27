@@ -1,0 +1,14 @@
+{
+  "name": "Nachrichten",
+  "short_name": "Nachrichten",
+  "description": "Viele Quellen, zu Geschichten gebündelt.",
+  "lang": "de",
+  "start_url": "./#aktuell/alle",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#FFFFFF",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

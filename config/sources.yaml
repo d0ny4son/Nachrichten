@@ -1,0 +1,140 @@
+# Quellen der Nachrichten-App
+#
+# So änderst du etwas: auf GitHub das Stift-Symbol oben rechts anklicken,
+# ändern, unten „Commit changes“. Danach zeigt ein grüner Haken, dass alles
+# stimmt; ein rotes X nennt den Fehler auf Deutsch.
+#
+# Erlaubte Werte:
+#   media_type: oeffentlich-rechtlich | zeitung | international
+#   region:     inland | ausland            (oder weglassen)
+#   category:   wissenschaft | technik | wirtschaft | kultur | sport  (oder weglassen)
+#
+# Hinweis: Adressen mit „# ungeprüft“ stammen aus dem Gedächtnis und werden
+# erst beim ersten echten Lauf geprüft (siehe site/data/status.json).
+
+clustering:
+  # Ab welcher Ähnlichkeit (0 bis 1) zwei Meldungen als dieselbe Geschichte gelten.
+  # Höher = vorsichtiger. Wird mit der Qualitätsmessung eingestellt.
+  threshold: 0.35
+
+sources:
+  - id: tagesschau
+    name: Tagesschau
+    media_type: oeffentlich-rechtlich
+    plus_patterns: []
+    feeds:
+      - {url: "https://www.tagesschau.de/index~rss2.xml"}
+      - {url: "https://www.tagesschau.de/inland/index~rss2.xml", region: inland}
+      - {url: "https://www.tagesschau.de/ausland/index~rss2.xml", region: ausland}
+      - {url: "https://www.tagesschau.de/wirtschaft/index~rss2.xml", category: wirtschaft}
+      - {url: "https://www.tagesschau.de/wissen/index~rss2.xml", category: wissenschaft}  # ungeprüft
+
+  - id: zdfheute
+    name: ZDF heute
+    media_type: oeffentlich-rechtlich
+    plus_patterns: []
+    feeds:
+      - {url: "https://www.zdf.de/rss/zdf/nachrichten"}  # ungeprüft
+
+  - id: deutschlandfunk
+    name: Deutschlandfunk
+    media_type: oeffentlich-rechtlich
+    plus_patterns: []
+    feeds:
+      - {url: "https://www.deutschlandfunk.de/nachrichten-100.rss"}  # ungeprüft
+      - {url: "https://www.deutschlandfunk.de/wirtschaft-106.rss", category: wirtschaft}  # ungeprüft
+      - {url: "https://www.deutschlandfunk.de/wissen-106.rss", category: wissenschaft}  # ungeprüft
+      - {url: "https://www.deutschlandfunk.de/kultur-136.rss", category: kultur}  # ungeprüft
+
+  - id: spiegel
+    name: Spiegel
+    media_type: zeitung
+    plus_patterns: []  # Spiegel+ ist an der Adresse nicht erkennbar (ungeprüft)
+    feeds:
+      - {url: "https://www.spiegel.de/schlagzeilen/index.rss"}
+      - {url: "https://www.spiegel.de/politik/deutschland/index.rss", region: inland}
+      - {url: "https://www.spiegel.de/ausland/index.rss", region: ausland}
+      - {url: "https://www.spiegel.de/wirtschaft/index.rss", category: wirtschaft}
+      - {url: "https://www.spiegel.de/wissenschaft/index.rss", category: wissenschaft}
+      - {url: "https://www.spiegel.de/netzwelt/index.rss", category: technik}
+      - {url: "https://www.spiegel.de/kultur/index.rss", category: kultur}
+      - {url: "https://www.spiegel.de/sport/index.rss", category: sport}
+
+  - id: sueddeutsche
+    name: Süddeutsche Zeitung
+    media_type: zeitung
+    plus_patterns: ["szplus", "sz-plus"]  # ungeprüft
+    feeds:
+      - {url: "https://rss.sueddeutsche.de/rss/Topthemen"}  # ungeprüft
+      - {url: "https://rss.sueddeutsche.de/rss/Politik"}  # ungeprüft
+      - {url: "https://rss.sueddeutsche.de/rss/Wirtschaft", category: wirtschaft}  # ungeprüft
+      - {url: "https://rss.sueddeutsche.de/rss/Wissen", category: wissenschaft}  # ungeprüft
+      - {url: "https://rss.sueddeutsche.de/rss/Kultur", category: kultur}  # ungeprüft
+      - {url: "https://rss.sueddeutsche.de/rss/Sport", category: sport}  # ungeprüft
+
+  - id: zeit
+    name: Zeit
+    media_type: zeitung
+    plus_patterns: ["zplus", "/zeit-plus/"]  # ungeprüft
+    feeds:
+      - {url: "https://newsfeed.zeit.de/index"}
+      - {url: "https://newsfeed.zeit.de/politik/deutschland/index", region: inland}  # ungeprüft
+      - {url: "https://newsfeed.zeit.de/politik/ausland/index", region: ausland}  # ungeprüft
+      - {url: "https://newsfeed.zeit.de/wirtschaft/index", category: wirtschaft}
+      - {url: "https://newsfeed.zeit.de/wissen/index", category: wissenschaft}
+      - {url: "https://newsfeed.zeit.de/digital/index", category: technik}
+      - {url: "https://newsfeed.zeit.de/kultur/index", category: kultur}
+      - {url: "https://newsfeed.zeit.de/sport/index", category: sport}
+
+  - id: taz
+    name: taz
+    media_type: zeitung
+    plus_patterns: []
+    feeds:
+      - {url: "https://taz.de/!p4608;rss/"}  # ungeprüft
+
+  - id: faz
+    name: FAZ
+    media_type: zeitung
+    plus_patterns: ["/faz-plus/", "faz\\.net/pro/"]  # ungeprüft
+    feeds:
+      - {url: "https://www.faz.net/rss/aktuell/"}
+      - {url: "https://www.faz.net/rss/aktuell/politik/inland/", region: inland}  # ungeprüft
+      - {url: "https://www.faz.net/rss/aktuell/politik/ausland/", region: ausland}  # ungeprüft
+      - {url: "https://www.faz.net/rss/aktuell/wirtschaft/", category: wirtschaft}
+      - {url: "https://www.faz.net/rss/aktuell/wissen/", category: wissenschaft}
+      - {url: "https://www.faz.net/rss/aktuell/technik-motor/", category: technik}  # ungeprüft
+      - {url: "https://www.faz.net/rss/aktuell/feuilleton/", category: kultur}
+      - {url: "https://www.faz.net/rss/aktuell/sport/", category: sport}
+
+  - id: welt
+    name: Welt
+    media_type: zeitung
+    plus_patterns: ["/plus\\d"]  # ungeprüft
+    feeds:
+      - {url: "https://www.welt.de/feeds/latest.rss"}
+      - {url: "https://www.welt.de/feeds/section/politik/deutschland.rss", region: inland}  # ungeprüft
+      - {url: "https://www.welt.de/feeds/section/politik/ausland.rss", region: ausland}  # ungeprüft
+      - {url: "https://www.welt.de/feeds/section/wirtschaft.rss", category: wirtschaft}  # ungeprüft
+      - {url: "https://www.welt.de/feeds/section/wissenschaft.rss", category: wissenschaft}  # ungeprüft
+      - {url: "https://www.welt.de/feeds/section/kultur.rss", category: kultur}  # ungeprüft
+      - {url: "https://www.welt.de/feeds/section/sport.rss", category: sport}  # ungeprüft
+
+  - id: nzz
+    name: NZZ
+    media_type: international
+    plus_patterns: []
+    feeds:
+      - {url: "https://www.nzz.ch/recent.rss"}  # ungeprüft
+      - {url: "https://www.nzz.ch/international.rss", region: ausland}  # ungeprüft
+      - {url: "https://www.nzz.ch/wissenschaft.rss", category: wissenschaft}  # ungeprüft
+      - {url: "https://www.nzz.ch/technologie.rss", category: technik}  # ungeprüft
+
+  - id: dw
+    name: Deutsche Welle
+    media_type: international
+    plus_patterns: []
+    feeds:
+      - {url: "https://rss.dw.com/rdf/rss-de-all"}  # ungeprüft
+      - {url: "https://rss.dw.com/rdf/rss-de-ger", region: inland}  # ungeprüft
+      - {url: "https://rss.dw.com/rdf/rss-de-wis", category: wissenschaft}  # ungeprüft

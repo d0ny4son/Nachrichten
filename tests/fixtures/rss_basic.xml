@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Beispiel</title>
+    <link>https://example.org/</link>
+    <description>Beispiel-Feed</description>
+    <item>
+      <title>Bundestag debattiert über den Haushaltsentwurf</title>
+      <link>https://example.org/inland/haushalt-100.html?utm_source=rss</link>
+      <description>&lt;p&gt;Dieser Satz ist ein Anrisstext. Der &lt;b&gt;Bundestag&lt;/b&gt; streitet über Schulden.&lt;/p&gt;</description>
+      <pubDate>Tue, 27 Oct 2026 10:08:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Meldung ohne Datum zur Bahn</title>
+      <link>https://example.org/bahn-101.html</link>
+      <description>Die Bahn legt neue Zahlen vor.</description>
+    </item>
+  </channel>
+</rss>

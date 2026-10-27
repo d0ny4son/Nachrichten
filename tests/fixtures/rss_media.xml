@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:media="http://search.yahoo.com/mrss/">
+  <channel>
+    <title>Medien</title>
+    <link>https://example.org/</link>
+    <description>Feed mit Bildern</description>
+    <item>
+      <title>Mit media content</title>
+      <link>https://example.org/a</link>
+      <pubDate>Tue, 27 Oct 2026 09:00:00 GMT</pubDate>
+      <media:content url="https://img.example.org/content.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Mit media thumbnail</title>
+      <link>https://example.org/b</link>
+      <pubDate>Tue, 27 Oct 2026 09:00:00 GMT</pubDate>
+      <media:thumbnail url="https://img.example.org/thumb.jpg"/>
+    </item>
+    <item>
+      <title>Mit enclosure</title>
+      <link>https://example.org/c</link>
+      <pubDate>Tue, 27 Oct 2026 09:00:00 GMT</pubDate>
+      <enclosure url="https://img.example.org/enc.jpg" type="image/jpeg" length="1000"/>
+    </item>
+    <item>
+      <title>Mit Bild im Text</title>
+      <link>https://example.org/d</link>
+      <pubDate>Tue, 27 Oct 2026 09:00:00 GMT</pubDate>
+      <description>&lt;img src="https://img.example.org/inline.jpg"&gt; Text dazu</description>
+    </item>
+    <item>
+      <title>Plus-Artikel ohne Bild</title>
+      <link>https://example.org/plus/geheim</link>
+      <pubDate>Tue, 27 Oct 2026 09:00:00 GMT</pubDate>
+      <enclosure url="https://example.org/audio.mp3" type="audio/mpeg" length="1000"/>
+    </item>
+  </channel>
+</rss>
