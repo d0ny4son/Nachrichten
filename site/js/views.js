@@ -13,7 +13,12 @@ const ICONS = {
   interessen: '<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>',
   back: '<path d="M15 5l-7 7 7 7"/>',
   x: '<path d="M6 6l12 12M18 6L6 18"/>',
+  glasses: '<circle cx="6.5" cy="14" r="3.5"/><circle cx="17.5" cy="14" r="3.5"/><path d="M10 14c1.2-1 2.8-1 4 0M3 14l1.5-6h2M21 14l-1.5-6h-2"/>',
 };
+const MAX_STRIP = 8; // höchstens so viele weitere Quellen in der Wischleiste
+
+const readMark = () =>
+  `<span class="readmark" title="Gelesen"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Gelesen">${ICONS.glasses}</svg></span>`;
 const icon = (name, size = 22) =>
   `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name]}</svg>`;
 
@@ -37,11 +42,11 @@ function sourceIcon(item, name) {
   return `<span class="logo" aria-hidden="true">${initials(name)}${icon}</span>`;
 }
 
-function srcRow(item, sources, now) {
+function srcRow(item, sources, now, extra = "") {
   const name = sources[item.source]?.name || item.source;
   return `<div class="src">${sourceIcon(item, name)}<span class="srcname">${escapeHtml(name)}</span>${
     item.plus ? '<span class="plus">Plus</span>' : ""
-  }<span class="time">· ${relativeTime(item.published, now)}</span></div>`;
+  }<span class="time">· ${relativeTime(item.published, now)}</span>${extra}</div>`;
 }
 
 const articleLink = (item, storyId, cls) =>
@@ -51,14 +56,17 @@ const distinctSources = (story) => new Set(story.items.map((i) => i.source)).siz
 
 export function storyCard(story, sources, ctx, reason = null) {
   const lead = story.items.find((i) => i.id === story.lead) || story.items[0];
-  const others = story.items.filter((i) => i !== lead).slice(0, 2);
+  const others = story.items.filter((i) => i !== lead).slice(0, MAX_STRIP);
   const read = (ctx.read || []).includes(story.id);
   const n = distinctSources(story);
   const thumb = lead.image ? `<img class="thumb" src="${safeUrl(lead.image)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : "";
-  return `<article class="card${read ? " read" : ""}">${reason ? `<p class="why">${escapeHtml(reason)}</p>` : ""}
-<div class="lead"><div class="leadtxt">${srcRow(lead, sources, ctx.now)}${articleLink(lead, story.id, "hl")}</div>${thumb}</div>${others
-    .map((it) => `<div class="relitem">${srcRow(it, sources, ctx.now)}${articleLink(it, story.id, "relhl")}</div>`)
-    .join("")}${
+  const strip = others.length
+    ? `<div class="strip" role="list" aria-label="Weitere Quellen">${others
+        .map((it) => `<div class="relcard" role="listitem">${srcRow(it, sources, ctx.now)}${articleLink(it, story.id, "relhl")}</div>`)
+        .join("")}</div>`
+    : "";
+  return `<article class="card">${reason ? `<p class="why">${escapeHtml(reason)}</p>` : ""}
+<div class="lead"><div class="leadtxt">${srcRow(lead, sources, ctx.now, read ? readMark() : "")}${articleLink(lead, story.id, "hl")}</div>${thumb}</div>${strip}${
     n > 1
       ? `<a class="more" href="#story/${escapeHtml(story.id)}">Komplette Berichterstattung · ${n} Quellen <span aria-hidden="true">›</span></a>`
       : ""

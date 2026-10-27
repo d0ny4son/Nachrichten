@@ -23,10 +23,11 @@ test("escapes html in titles", () => {
   assert.ok(html.includes("&lt;img onerror=x&gt;"));
 });
 
-test("card shows up to two further sources and the count link", () => {
+test("card shows all further sources in a swipe strip and the count link", () => {
   const { story, sources } = bigStory();
   const html = storyCard(story, sources, { ...ctx, sources });
-  assert.equal((html.match(/class="relitem"/g) || []).length, 2);
+  assert.match(html, /<div class="strip" role="list" aria-label="Weitere Quellen">/);
+  assert.equal((html.match(/class="relcard"/g) || []).length, 4);
   assert.ok(html.includes("Komplette Berichterstattung · 5 Quellen"));
   assert.ok(html.includes('href="#story/big"'));
 });
@@ -49,7 +50,17 @@ test("plus badge and read class", () => {
   s.items[0].plus = true;
   const html = storyCard(s, DATA.sources, { ...ctx, read: ["s2"] });
   assert.ok(html.includes('class="plus"'));
-  assert.ok(html.includes('class="card read"'));
+  assert.ok(html.includes('class="card"'));
+  assert.ok(!html.includes("card read"));
+  assert.match(html, /<span class="readmark" title="Gelesen"><svg[^>]*role="img" aria-label="Gelesen"/);
+});
+
+test("unread card has no glasses mark", () => {
+  assert.ok(!storyCard(DATA.stories[1], DATA.sources, ctx).includes("readmark"));
+});
+
+test("single-source card has no strip", () => {
+  assert.ok(!storyCard(DATA.stories[1], DATA.sources, ctx).includes('class="strip"'));
 });
 
 test("aktuell tabs mark the active tab with aria-current", () => {

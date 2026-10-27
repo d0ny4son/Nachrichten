@@ -1,7 +1,7 @@
 // Service Worker: App-Hülle offline verfügbar, Nachrichten mit Rückfall auf den letzten Stand.
 importScripts("sw-strategy.js");
 
-const CACHE = "app-v3";
+const CACHE = "app-v4";
 const NETWORK_TIMEOUT_MS = 4000;
 const SHELL = [
   "./",
