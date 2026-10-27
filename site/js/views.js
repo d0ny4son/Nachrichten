@@ -29,12 +29,12 @@ function initials(name) {
 }
 
 // Symbol der Quelle direkt von deren Website; lädt es nicht, bleiben die Buchstaben sichtbar.
-function sourceIcon(item, name) {
+function sourceIcon(item, name, icons = {}) {
   let icon = "";
   try {
     const u = new URL(item.site || item.link);
     if (u.protocol === "https:" || u.protocol === "http:") {
-      icon = `<img class="favicon" src="${escapeHtml(u.origin)}/favicon.ico" alt="" referrerpolicy="no-referrer" onload="this.classList.add('ok')" onerror="this.remove()">`;
+      icon = `<img class="favicon" src="${escapeHtml(icons[u.origin] || `${u.origin}/favicon.ico`)}" alt="" referrerpolicy="no-referrer" onload="this.classList.add('ok')" onerror="this.remove()">`;
     }
   } catch {
     icon = "";
@@ -42,11 +42,11 @@ function sourceIcon(item, name) {
   return `<span class="logo" aria-hidden="true">${initials(name)}${icon}</span>`;
 }
 
-function srcRow(item, sources, now, extra = "") {
+function srcRow(item, sources, ctx, extra = "") {
   const name = item.publisher || sources[item.source]?.name || item.source;
-  return `<div class="src">${sourceIcon(item, name)}<span class="srcname">${escapeHtml(name)}</span>${
+  return `<div class="src">${sourceIcon(item, name, ctx.icons || {})}<span class="srcname">${escapeHtml(name)}</span>${
     item.plus ? '<span class="plus">Plus</span>' : ""
-  }<span class="time">· ${relativeTime(item.published, now)}</span>${extra}</div>`;
+  }<span class="time">· ${relativeTime(item.published, ctx.now)}</span>${extra}</div>`;
 }
 
 const articleLink = (item, storyId, cls) =>
@@ -62,11 +62,11 @@ export function storyCard(story, sources, ctx, reason = null) {
   const thumb = lead.image ? `<img class="thumb" src="${safeUrl(lead.image)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : "";
   const strip = others.length
     ? `<div class="strip" role="list" aria-label="Weitere Quellen">${others
-        .map((it) => `<div class="relcard" role="listitem">${srcRow(it, sources, ctx.now)}${articleLink(it, story.id, "relhl")}</div>`)
+        .map((it) => `<div class="relcard" role="listitem">${srcRow(it, sources, ctx)}${articleLink(it, story.id, "relhl")}</div>`)
         .join("")}</div>`
     : "";
   return `<article class="card">${reason ? `<p class="why">${escapeHtml(reason)}</p>` : ""}
-<div class="lead"><div class="leadtxt">${srcRow(lead, sources, ctx.now, read ? readMark() : "")}${articleLink(lead, story.id, "hl")}</div>${thumb}</div>${strip}${
+<div class="lead"><div class="leadtxt">${srcRow(lead, sources, ctx, read ? readMark() : "")}${articleLink(lead, story.id, "hl")}</div>${thumb}</div>${strip}${
     n > 1
       ? `<a class="more" href="#story/${escapeHtml(story.id)}">Komplette Berichterstattung · ${n} Quellen <span aria-hidden="true">›</span></a>`
       : ""
@@ -131,7 +131,7 @@ export function storyView(story, sources, mediaType, ctx) {
     .join("");
   const items = itemsByMediaType(story, sources, mediaType);
   const list = items.length
-    ? items.map((it) => `<div class="item">${srcRow(it, sources, ctx.now)}${articleLink(it, story.id, "ihl")}</div>`).join("")
+    ? items.map((it) => `<div class="item">${srcRow(it, sources, ctx)}${articleLink(it, story.id, "ihl")}</div>`).join("")
     : '<p class="empty">Keine Meldung dieses Medientyps.</p>';
   return `<div class="bar"><a class="back" href="#aktuell/alle" aria-label="Zurück">${icon("back")}</a><p class="barlabel">Komplette Berichterstattung</p></div>
 <header class="head"><h1 class="title">${escapeHtml(lead.title)}</h1><p class="meta">${distinctSources(story)} Quellen · zuletzt aktualisiert ${relativeTime(

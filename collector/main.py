@@ -2,8 +2,10 @@
 from __future__ import annotations
 
 import sys
+from collections import Counter
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import requests
 
@@ -11,6 +13,7 @@ from .cluster import WINDOW, cluster_items
 from .config import load_config
 from .fetch import TOPIC_SOURCE_ID, FetchError, dedupe_items, fetch_feed, parse_feed, parse_topic_feed, topic_feed_url
 from .ids import assign_story_ids
+from .icons import resolve_icons
 from .og_image import fill_missing_images
 from .output import build_output, iso, write_json_atomic
 from .rank import score
@@ -105,7 +108,11 @@ def run(config_path: Path, data_dir: Path, now: datetime, session) -> int:
         st.score = score(st, now)
     fill_missing_images(stories, state["og_cache"], session)
 
-    write_json_atomic(data_dir / "stories.json", build_output(stories, config, now))
+    counts = Counter(o for it in items if (o := _origin(it.site or it.link)))
+    icons = resolve_icons([o for o, _ in counts.most_common()], state["icon_cache"], session, now)
+    output = build_output(stories, config, now)
+    output["icons"] = icons
+    write_json_atomic(data_dir / "stories.json", output)
     _write_status(data_dir, now, status, items)
 
     state["items"] = {it.id: item_to_dict(it) for it in items}
@@ -118,6 +125,13 @@ def run(config_path: Path, data_dir: Path, now: datetime, session) -> int:
     state["og_cache"] = {k: v for k, v in state["og_cache"].items() if k in links}
     save_state(data_dir / "state.json", state)
     return 0
+
+
+def _origin(url: str) -> str | None:
+    parts = urlsplit(url or "")
+    if parts.scheme not in ("http", "https") or not parts.netloc:
+        return None
+    return f"{parts.scheme}://{parts.netloc}"
 
 
 def _norm(title: str) -> str:

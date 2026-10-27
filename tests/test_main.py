@@ -115,3 +115,11 @@ def test_state_stems_are_sorted(tmp_path):
     run(cfg, data, NOW, session)
     for it in load(data, "state.json")["items"].values():
         assert it["stems"] == sorted(it["stems"])
+
+
+def test_output_contains_icon_map(tmp_path):
+    cfg, data = setup(tmp_path)
+    page = FakeResponse(200, b'<link rel="icon" sizes="32x32" href="/icon32.png">')
+    session = FakeSession({"https://a/feed": FakeResponse(200, BASIC), "https://b/feed": FakeResponse(200, ATOM), "https://example.org/": page})
+    run(cfg, data, NOW, session)
+    assert load(data, "stories.json")["icons"] == {"https://example.org": "https://example.org/icon32.png"}
