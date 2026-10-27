@@ -1,0 +1,32 @@
+name: validate
+
+# Prüft Quellen-Liste und Code. Ein rotes X nennt den Fehler auf Deutsch.
+on:
+  push:
+    paths: ["config/**", "collector/**", "site/**", "tests/**", "site-tests/**"]
+  pull_request:
+    paths: ["config/**", "collector/**", "site/**", "tests/**", "site-tests/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Quellen-Liste prüfen
+        run: python -c "from collector.config import load_config; c = load_config('config/sources.yaml'); print(f'{len(c.sources)} Quellen in Ordnung')"
+      - name: Tests Sammler
+        run: pytest -q
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Tests App
+        run: npm test
