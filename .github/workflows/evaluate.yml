@@ -1,0 +1,43 @@
+name: evaluate
+
+# Qualitätsmessung der Bündelung (siehe docs/ANLEITUNG.md, Abschnitt 5).
+on:
+  workflow_dispatch:
+    inputs:
+      schritt:
+        description: "export = Testtabelle erzeugen, score = ausgefüllte Tabelle auswerten"
+        type: choice
+        options: [export, score]
+        default: export
+      anzahl:
+        description: "Anzahl Meldungen im Testset"
+        default: "100"
+
+permissions:
+  contents: write
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      - name: Testtabelle erzeugen
+        if: inputs.schritt == 'export'
+        run: |
+          python -m collector.evaluate export --n "${{ inputs.anzahl }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add evaluation/testset.csv evaluation/testset_items.json
+          git commit -m "Testset für Qualitätsmessung" || true
+          git pull --rebase --autostash
+          git push
+
+      - name: Auswerten
+        if: inputs.schritt == 'score'
+        run: python -m collector.evaluate score | tee -a "$GITHUB_STEP_SUMMARY"
