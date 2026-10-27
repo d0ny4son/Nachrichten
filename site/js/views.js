@@ -23,9 +23,23 @@ function initials(name) {
   return escapeHtml(raw);
 }
 
+// Symbol der Quelle direkt von deren Website; lädt es nicht, bleiben die Buchstaben sichtbar.
+function sourceIcon(item, name) {
+  let icon = "";
+  try {
+    const u = new URL(item.link);
+    if (u.protocol === "https:" || u.protocol === "http:") {
+      icon = `<img class="favicon" src="${escapeHtml(u.origin)}/favicon.ico" alt="" referrerpolicy="no-referrer" onload="this.classList.add('ok')" onerror="this.remove()">`;
+    }
+  } catch {
+    icon = "";
+  }
+  return `<span class="logo" aria-hidden="true">${initials(name)}${icon}</span>`;
+}
+
 function srcRow(item, sources, now) {
   const name = sources[item.source]?.name || item.source;
-  return `<div class="src"><span class="logo" aria-hidden="true">${initials(name)}</span><span class="srcname">${escapeHtml(name)}</span>${
+  return `<div class="src">${sourceIcon(item, name)}<span class="srcname">${escapeHtml(name)}</span>${
     item.plus ? '<span class="plus">Plus</span>' : ""
   }<span class="time">· ${relativeTime(item.published, now)}</span></div>`;
 }
@@ -77,10 +91,13 @@ export function aktuellView(stories, tab, ctx) {
       k === tab ? `<a class="tab on" href="#aktuell/${k}" aria-current="page">${l}</a>` : `<a class="tab" href="#aktuell/${k}">${l}</a>`,
     )
     .join("");
-  const cards = stories.length
-    ? stories.map((s) => storyCard(s, ctx.sources, ctx)).join("")
+  const limit = ctx.limit ?? stories.length;
+  const shown = stories.slice(0, limit);
+  const cards = shown.length
+    ? shown.map((s) => storyCard(s, ctx.sources, ctx)).join("")
     : '<p class="empty">Gerade keine Meldungen in diesem Bereich.</p>';
-  return `${header("Nachrichten", ctx)}<nav class="tabs" aria-label="Region">${tabs}</nav><main class="feed">${cards}</main>${bottomNav("aktuell")}`;
+  const more = stories.length > limit ? '<button class="more-btn" data-more>Weitere Meldungen</button>' : "";
+  return `${header("Nachrichten", ctx)}<nav class="tabs" aria-label="Region">${tabs}</nav><main class="feed">${cards}${more}</main>${bottomNav("aktuell")}`;
 }
 
 export function storyView(story, sources, mediaType, ctx) {
@@ -131,7 +148,18 @@ export function interessenView(settings) {
   const textHidden = settings.hidden.filter((h) => !h.startsWith("kat:"));
   const form = (field, label, placeholder, button) =>
     `<form class="add" data-add="${field}"><label class="sr" for="in-${field}">${label}</label><input id="in-${field}" class="field" name="value" type="text" autocomplete="off" placeholder="${placeholder}"><button class="btn" type="submit">${button}</button></form>`;
+  const themes = [
+    ["system", "Wie Handy"],
+    ["light", "Hell"],
+    ["dark", "Dunkel"],
+  ]
+    .map(
+      ([k, l]) =>
+        `<label class="seg"><input type="radio" name="theme" value="${k}"${settings.theme === k ? " checked" : ""}><span>${l}</span></label>`,
+    )
+    .join("");
   return `<header class="top"><h1 class="brand">Interessen</h1></header><main class="body">
+<h2 class="sec">Darstellung</h2><div class="segs" role="radiogroup" aria-label="Darstellung">${themes}</div>
 <h2 class="sec">Kategorien</h2><div class="panel">${cats}</div>
 <h2 class="sec">Stichworte</h2><div class="panel">${form("keywords", "Neues Stichwort", "Neues Stichwort, z. B. Klima", "Folgen")}<div class="kws">${chipList(settings.keywords, "keywords")}</div></div>
 <p class="hint">Stichworte werden in Überschriften und wichtigen Wörtern aller Meldungen gesucht, auch als Wortanfang.</p>

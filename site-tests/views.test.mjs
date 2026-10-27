@@ -80,3 +80,39 @@ test("interessen view shows settings", () => {
   assert.ok(html.includes("fußball"));
   assert.match(html, /data-hide-cat="kultur"[^>]*checked/);
 });
+
+function many(n) {
+  return Array.from({ length: n }, (_, i) => ({ ...structuredClone(DATA.stories[1]), id: `m${i}` }));
+}
+
+test("aktuell shows only the limit and a more button", () => {
+  const html = aktuellView(many(35), "alle", { ...ctx, limit: 30 });
+  assert.equal((html.match(/<article/g) || []).length, 30);
+  assert.match(html, /<button class="more-btn" data-more>Weitere Meldungen<\/button>/);
+});
+
+test("no more button when everything fits", () => {
+  const html = aktuellView(many(12), "alle", { ...ctx, limit: 30 });
+  assert.equal((html.match(/<article/g) || []).length, 12);
+  assert.ok(!html.includes("data-more"));
+});
+
+test("source icon from the article's own site with initials fallback", () => {
+  const html = storyCard(DATA.stories[1], DATA.sources, ctx);
+  assert.match(html, /<img class="favicon" src="https:\/\/example\.org\/favicon\.ico"/);
+  assert.ok(html.includes('class="logo"'));
+  // erst nach dem Laden sichtbar, sonst verdeckt ein leeres Kästchen die Buchstaben
+  assert.ok(html.includes(`onload="this.classList.add('ok')"`));
+});
+
+test("no source icon for non-http links", () => {
+  const s = structuredClone(DATA.stories[1]);
+  s.items[0].link = "javascript:alert(1)";
+  assert.ok(!storyCard(s, DATA.sources, ctx).includes("favicon"));
+});
+
+test("interessen view offers theme choice with current one checked", () => {
+  const html = interessenView({ ...DEFAULTS, theme: "dark" });
+  assert.match(html, /name="theme" value="dark" checked/);
+  assert.match(html, /name="theme" value="system"(?! checked)/);
+});

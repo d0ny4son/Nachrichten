@@ -2,7 +2,8 @@
 const KEY = "nachrichten.settings";
 const MAX_READ = 500;
 
-export const DEFAULTS = Object.freeze({ categories: [], keywords: [], hidden: [], read: [] });
+export const THEMES = ["system", "light", "dark"];
+export const DEFAULTS = Object.freeze({ categories: [], keywords: [], hidden: [], read: [], theme: "system" });
 
 const strings = (v) => (Array.isArray(v) ? v.filter((x) => typeof x === "string") : []);
 
@@ -19,6 +20,7 @@ export function loadSettings(...args) {
       keywords: strings(s.keywords),
       hidden: strings(s.hidden),
       read: strings(s.read).slice(-MAX_READ),
+      theme: THEMES.includes(s.theme) ? s.theme : "system",
     };
   } catch {
     return { ...DEFAULTS };
