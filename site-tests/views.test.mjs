@@ -168,3 +168,11 @@ test("feedback knows when a topic is already in the topic list", () => {
   assert.ok(html.includes("steht schon in der Themen-Liste"));
   assert.ok(!html.includes("config/sources.yaml"));
 });
+
+test("top rubric: nav says Top and list has a heading", () => {
+  const html = aktuellView(DATA.stories, "alle", ctx);
+  assert.match(html, /<span class="pill">.*<\/span>Top<\/a>/s);
+  assert.ok(!html.includes(">Aktuell</a>"));
+  assert.ok(html.includes('<h2 class="sec">Top-Meldungen</h2>'));
+  assert.ok(aktuellView(DATA.stories, "inland", ctx).includes('<h2 class="sec">Top-Meldungen Inland</h2>'));
+});

@@ -76,7 +76,7 @@ export function storyCard(story, sources, ctx, reason = null) {
 export function bottomNav(active) {
   const item = (key, label, href) =>
     `<a class="navi${active === key ? " on" : ""}" href="${href}"${active === key ? ' aria-current="page"' : ""}><span class="pill">${icon(key)}</span>${label}</a>`;
-  return `<nav class="nav" aria-label="Hauptmenü">${item("aktuell", "Aktuell", "#aktuell/alle")}${item("fuerdich", "Für dich", "#fuerdich")}${item(
+  return `<nav class="nav" aria-label="Hauptmenü">${item("aktuell", "Top", "#aktuell/alle")}${item("fuerdich", "Für dich", "#fuerdich")}${item(
     "interessen",
     "Interessen",
     "#interessen",
@@ -101,8 +101,9 @@ export function aktuellView(stories, tab, ctx) {
     .join("");
   const limit = ctx.limit ?? stories.length;
   const shown = stories.slice(0, limit);
+  const title = { alle: "Top-Meldungen", inland: "Top-Meldungen Inland", ausland: "Top-Meldungen Ausland" }[tab];
   const cards = shown.length
-    ? shown.map((s) => storyCard(s, ctx.sources, ctx)).join("")
+    ? `<h2 class="sec">${title}</h2>` + shown.map((s) => storyCard(s, ctx.sources, ctx)).join("")
     : '<p class="empty">Gerade keine Meldungen in diesem Bereich.</p>';
   const more = stories.length > limit ? '<button class="more-btn" data-more>Weitere Meldungen</button>' : "";
   const search = `<form class="search" role="search" onsubmit="return false"><label class="sr" for="q">Suchen</label><input id="q" class="field" type="search" inputmode="search" autocomplete="off" placeholder="Suchen, z. B. Klima" value="${escapeHtml(ctx.query || "")}"></form>`;
@@ -196,6 +197,6 @@ export function interessenView(settings, info = null) {
 <h2 class="sec">Stichworte</h2>${feedback}<div class="panel">${form("keywords", "Neues Stichwort", "Neues Stichwort, z. B. Klima", "Folgen")}<div class="kws">${chipList(settings.keywords, "keywords")}</div></div>
 <p class="hint">Stichworte werden in Überschriften und wichtigen Wörtern aller Meldungen gesucht, auch als Wortanfang.</p>
 <h2 class="sec">Themen ausblenden</h2><div class="panel">${form("hidden", "Thema ausblenden", "Thema, z. B. Fußball", "Ausblenden")}<div class="kws">${chipList(textHidden, "hidden")}</div>${hideCats}</div>
-<p class="hint">Ausgeblendetes verschwindet überall, auch unter Aktuell. Gespeichert wird nur auf diesem Gerät.</p>
+<p class="hint">Ausgeblendetes verschwindet überall, auch unter Top. Gespeichert wird nur auf diesem Gerät.</p>
 </main>${bottomNav("interessen")}`;
 }
