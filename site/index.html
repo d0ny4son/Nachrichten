@@ -3,7 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#FFFFFF">
+<meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111317" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<script>
+  // Gewählte Darstellung sofort setzen, damit nichts hell aufblitzt.
+  try {
+    var t = JSON.parse(localStorage.getItem("nachrichten.settings") || "{}").theme;
+    if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+  } catch (e) {}
+</script>
 <meta name="description" content="Private Nachrichten-App: viele Quellen, zu Geschichten gebündelt.">
 <title>Nachrichten</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">

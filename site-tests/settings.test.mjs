@@ -64,3 +64,12 @@ test("default storage that throws on access does not crash", () => {
     else delete globalThis.localStorage;
   }
 });
+
+test("theme defaults to system and rejects unknown values", () => {
+  assert.equal(DEFAULTS.theme, "system");
+  const s = memory();
+  s.setItem("nachrichten.settings", JSON.stringify({ theme: "lila" }));
+  assert.equal(loadSettings(s).theme, "system");
+  s.setItem("nachrichten.settings", JSON.stringify({ theme: "dark" }));
+  assert.equal(loadSettings(s).theme, "dark");
+});

@@ -5,6 +5,8 @@ import { addHidden, addKeyword, loadSettings, markRead, removeFrom, saveSettings
 import { aktuellView, escapeHtml, fuerDichView, interessenView, storyView } from "./views.js";
 
 const HANG_MS = 2 * 60 * 60 * 1000;
+const PAGE = 30; // Top-Meldungen pro Seite, „Weitere Meldungen“ zeigt jeweils 30 mehr
+let limit = PAGE;
 const root = document.getElementById("app");
 let settings = loadSettings();
 let loaded = null; // {data, stale} | {error}
@@ -50,8 +52,14 @@ function render() {
     root.innerHTML = fuerDichView(fuerDich(data, settings), c);
   } else {
     const tab = ["alle", "inland", "ausland"].includes(r.a) ? r.a : "alle";
-    root.innerHTML = aktuellView(aktuell(data, tab, settings), tab, c);
+    root.innerHTML = aktuellView(aktuell(data, tab, settings), tab, { ...c, limit });
   }
+}
+
+function applyTheme() {
+  const t = settings.theme;
+  if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+  else delete document.documentElement.dataset.theme;
 }
 
 function update(next) {
@@ -69,6 +77,11 @@ root.addEventListener("click", (e) => {
     setTimeout(render, 300);
     return;
   }
+  if (e.target.closest("[data-more]")) {
+    limit += PAGE;
+    render();
+    return;
+  }
   const rm = e.target.closest("[data-remove]");
   if (rm) {
     update(removeFrom(settings, rm.dataset.remove, rm.dataset.value));
@@ -80,6 +93,10 @@ root.addEventListener("change", (e) => {
   const t = e.target;
   if (t.matches("[data-toggle-cat]")) update(toggle(settings, "categories", t.value));
   else if (t.matches("[data-hide-cat]")) update(toggle(settings, "hidden", `kat:${t.dataset.hideCat}`));
+  else if (t.matches('input[name="theme"]')) {
+    update({ ...settings, theme: t.value });
+    applyTheme();
+  }
 });
 
 root.addEventListener("submit", (e) => {
@@ -95,6 +112,7 @@ root.addEventListener("submit", (e) => {
 });
 
 window.addEventListener("hashchange", () => {
+  limit = PAGE;
   render();
   window.scrollTo(0, 0);
 });
@@ -106,6 +124,7 @@ if ("serviceWorker" in navigator) {
 }
 
 if (!location.hash) history.replaceState(null, "", "#aktuell/alle");
+applyTheme();
 render();
 loadData().then((r) => {
   loaded = r;
