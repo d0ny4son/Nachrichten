@@ -1,0 +1,20 @@
+name: keepalive
+
+# GitHub pausiert Zeitpläne nach 60 Tagen ohne Aktivität.
+# Dieser Ablauf schaltet „collect“ einmal im Monat wieder ein.
+on:
+  schedule:
+    - cron: "17 4 1 * *"
+  workflow_dispatch:
+
+permissions:
+  actions: write
+
+jobs:
+  enable:
+    runs-on: ubuntu-latest
+    steps:
+      - name: collect aktiv halten
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/collect.yml/enable"
