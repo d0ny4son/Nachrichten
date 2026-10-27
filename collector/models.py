@@ -29,6 +29,7 @@ class Source:
 class Config:
     sources: list[Source]
     threshold: float
+    topics: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -47,6 +48,10 @@ class Item:
     has_date: bool
     stems: list[str]
     keywords: list[str]
+    # Nur bei Treffern der Themen-Suche (Google News): echter Absender, dessen Website, Suchbegriff
+    publisher: str | None = None
+    site: str | None = None
+    topic: str | None = None
 
 
 @dataclass

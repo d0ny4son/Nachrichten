@@ -94,4 +94,17 @@ def load_config(path: str | Path) -> Config:
             )
         sources.append(Source(id=sid, name=str(name), media_type=media_type, feeds=feeds, plus_patterns=list(patterns)))
 
-    return Config(sources=sources, threshold=float(threshold))
+    topics_raw = raw.get("themen") or []
+    if not isinstance(topics_raw, list):
+        _fail("„themen:“ muss eine Liste sein, z. B. themen: [Wasserstoff, Elektrolyse]")
+    topics: list[str] = []
+    for t in topics_raw:
+        t = str(t).strip() if t is not None else ""
+        if not t:
+            _fail("„themen:“ enthält einen leeren Eintrag.")
+        if t not in topics:
+            topics.append(t)
+    if len(topics) > 20:
+        _fail("Höchstens 20 Themen in „themen:“ eintragen.")
+
+    return Config(sources=sources, threshold=float(threshold), topics=topics)

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { aktuellView, escapeHtml, fuerDichView, interessenView, storyCard, storyView } from "../site/js/views.js";
+import { aktuellView, escapeHtml, fuerDichView, interessenView, searchResults, storyCard, storyView } from "../site/js/views.js";
 import { DEFAULTS } from "../site/js/settings.js";
 import { DATA, NOW } from "./fixture.mjs";
 
@@ -126,4 +126,45 @@ test("interessen view offers theme choice with current one checked", () => {
   const html = interessenView({ ...DEFAULTS, theme: "dark" });
   assert.match(html, /name="theme" value="dark" checked/);
   assert.match(html, /name="theme" value="system"(?! checked)/);
+});
+
+const gItem = { id: "g1", source: "themen", publisher: "Handelsblatt", site: "https://www.handelsblatt.com",
+  title: "Neues Wasserstoffnetz startet", link: "https://news.google.com/x", published: "2026-10-27T10:45:00Z",
+  image: null, plus: false, keywords: [] };
+const gStory = { id: "t1", score: 1, region: null, categories: [], latest: "2026-10-27T10:45:00Z", lead: "g1", topic_only: true, items: [gItem] };
+const tctx = { ...ctx, sources: { ...DATA.sources, themen: { name: "Themen-Suche", media_type: "themen" } } };
+
+test("topic items show their real publisher and its icon", () => {
+  const html = storyCard(gStory, tctx.sources, tctx);
+  assert.ok(html.includes(">Handelsblatt<"));
+  assert.ok(html.includes('src="https://www.handelsblatt.com/favicon.ico"'));
+  assert.ok(!html.includes("Themen-Suche"));
+});
+
+test("aktuell has a search field", () => {
+  assert.match(aktuellView([], "alle", ctx), /<form class="search" role="search"[^>]*>.*<input id="q"/s);
+});
+
+test("search results show count and follow button", () => {
+  const html = searchResults([gStory], "Wasserstoff", { ...tctx, keywords: [] });
+  assert.ok(html.includes("1 Treffer für „Wasserstoff“"));
+  assert.match(html, /<button class="follow" data-follow="wasserstoff">Thema folgen<\/button>/);
+  assert.ok(!searchResults([gStory], "Wasserstoff", { ...tctx, keywords: ["wasserstoff"] }).includes("data-follow"));
+});
+
+test("search without hits explains the topic list", () => {
+  const html = searchResults([], "Elektrolyse", { ...tctx, keywords: [] });
+  assert.ok(html.includes("Keine Treffer für „Elektrolyse“"));
+  assert.ok(html.includes("themen:"));
+});
+
+test("interessen shows feedback after adding a keyword", () => {
+  assert.ok(interessenView(DEFAULTS, { term: "klima", hits: 12 }).includes("„klima“: gerade 12 Meldungen"));
+  assert.ok(interessenView(DEFAULTS, { term: "elektrolyse", hits: 0 }).includes("themen:"));
+});
+
+test("feedback knows when a topic is already in the topic list", () => {
+  const html = interessenView(DEFAULTS, { term: "elektrolyse", hits: 0, listed: true });
+  assert.ok(html.includes("steht schon in der Themen-Liste"));
+  assert.ok(!html.includes("config/sources.yaml"));
 });

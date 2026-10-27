@@ -15,7 +15,7 @@ def iso(dt: datetime) -> str:
 
 
 def _item(it: Item, is_lead: bool) -> dict:
-    return {
+    d = {
         "id": it.id,
         "source": it.source_id,
         "title": it.title,
@@ -25,6 +25,10 @@ def _item(it: Item, is_lead: bool) -> dict:
         "plus": it.plus,
         "keywords": it.keywords,
     }
+    if it.publisher:
+        d["publisher"] = it.publisher
+        d["site"] = it.site
+    return d
 
 
 def build_output(stories: list[Story], config: Config, generated_at: datetime) -> dict:
@@ -32,7 +36,11 @@ def build_output(stories: list[Story], config: Config, generated_at: datetime) -
     return {
         "version": 1,
         "generated_at": iso(generated_at),
-        "sources": {s.id: {"name": s.name, "media_type": s.media_type} for s in config.sources},
+        "topics": list(config.topics),
+        "sources": {
+            **{s.id: {"name": s.name, "media_type": s.media_type} for s in config.sources},
+            "themen": {"name": "Themen-Suche", "media_type": "themen"},
+        },
         "stories": [
             {
                 "id": st.id,
@@ -41,6 +49,7 @@ def build_output(stories: list[Story], config: Config, generated_at: datetime) -
                 "categories": sorted(st.categories),
                 "latest": iso(st.latest),
                 "lead": st.lead.id,
+                "topic_only": all(it.topic for it in st.items),
                 "items": [_item(it, it.id == st.lead.id) for it in sorted(st.items, key=lambda i: i.published, reverse=True)],
             }
             for st in ordered

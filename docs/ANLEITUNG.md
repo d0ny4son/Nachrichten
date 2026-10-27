@@ -61,3 +61,10 @@ GitHub pausiert Zeitpläne in seltenen Fällen (z. B. nach 60 Tagen ohne Änderu
 1. Reiter „Actions“ › links „collect“.
 2. Erscheint ein gelber Hinweis „This scheduled workflow is disabled…“: **Enable workflow** anklicken.
 3. Sonst den letzten Lauf anklicken und die rote Meldung lesen.
+
+## 7. Themen-Suche über die 11 Medien hinaus
+
+In `config/sources.yaml` steht ganz oben die Liste `themen:`. Für jedes Thema dort ruft die App bei jedem Lauf die Google-News-Suche der letzten 2 Tage ab. Die Treffer erscheinen in „Für dich“ (wenn du dem Stichwort folgst) und in der Suche, nicht in den Top-Meldungen.
+
+- Thema hinzufügen: Datei öffnen, Stift-Symbol, eine Zeile `  - Thema` ergänzen, „Commit changes“.
+- Achtung: Diese Liste ist öffentlich sichtbar. Deine Stichworte in der App bleiben dagegen nur auf deinem Handy.

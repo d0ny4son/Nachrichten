@@ -17,6 +17,12 @@ clustering:
   # Höher = vorsichtiger. Wird mit der Qualitätsmessung eingestellt.
   threshold: 0.35
 
+# Themen-Suche über die Medien oben hinaus (Google News, letzte 2 Tage).
+# Achtung: Diese Liste ist öffentlich sichtbar. Treffer erscheinen unter „Für dich“ und in der Suche.
+themen:
+  - Wasserstoff
+  - Elektrolyse
+
 sources:
   - id: tagesschau
     name: Tagesschau

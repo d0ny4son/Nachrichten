@@ -37,6 +37,9 @@ def item_to_dict(it: Item) -> dict:
         "has_date": it.has_date,
         "stems": it.stems,
         "keywords": it.keywords,
+        "publisher": it.publisher,
+        "site": it.site,
+        "topic": it.topic,
     }
 
 
@@ -54,4 +57,7 @@ def item_from_dict(d: dict) -> Item:
         has_date=bool(d.get("has_date", True)),
         stems=list(d.get("stems") or ()),
         keywords=list(d.get("keywords") or ()),
+        publisher=d.get("publisher"),
+        site=d.get("site"),
+        topic=d.get("topic"),
     )

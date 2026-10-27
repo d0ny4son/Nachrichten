@@ -9,7 +9,7 @@ import requests
 
 from .cluster import WINDOW, cluster_items
 from .config import load_config
-from .fetch import FetchError, dedupe_items, fetch_feed, parse_feed
+from .fetch import TOPIC_SOURCE_ID, FetchError, dedupe_items, fetch_feed, parse_feed, parse_topic_feed, topic_feed_url
 from .ids import assign_story_ids
 from .og_image import fill_missing_images
 from .output import build_output, iso, write_json_atomic
@@ -58,13 +58,46 @@ def run(config_path: Path, data_dir: Path, now: datetime, session) -> int:
             fresh.extend(parsed)
         status[source.id] = {"ok": not errors, "errors": errors}
 
+    # Themen-Suche (Google News) – zählt nicht zu „alle Quellen ausgefallen“
+    if config.topics:
+        errors = []
+        for term in config.topics:
+            url = topic_feed_url(term)
+            old_cache = state["http_cache"].get(url)
+            try:
+                data = fetch_feed(url, state["http_cache"], session)
+                if data is None:
+                    continue
+                parsed = parse_topic_feed(data, term, now, state["first_seen"])
+            except Exception as e:
+                errors.append(f"Thema „{term}“: {e}")
+                if old_cache is None:
+                    state["http_cache"].pop(url, None)
+                else:
+                    state["http_cache"][url] = old_cache
+                continue
+            for it in parsed:
+                if not it.has_date and it.id not in state["first_seen"]:
+                    state["first_seen"][it.id] = iso(now)
+            fresh.extend(parsed)
+        status[TOPIC_SOURCE_ID] = {"ok": not errors, "errors": errors}
+
     if feeds_total and feeds_failed == feeds_total:
         _write_status(data_dir, now, status, [])
         save_state(data_dir / "state.json", state)
         return 1
 
     known_sources = {s.id for s in config.sources}
-    items = [it for it in dedupe_items(fresh + stored) if it.source_id in known_sources and now - it.published <= WINDOW]
+    topics = set(config.topics)
+    items = [
+        it
+        for it in dedupe_items(fresh + stored)
+        if (it.source_id in known_sources or (it.source_id == TOPIC_SOURCE_ID and it.topic in topics))
+        and now - it.published <= WINDOW
+    ]
+    # Themen-Treffer, die wir schon direkt von einem der Medien haben, nicht doppelt zeigen
+    direct_titles = {_norm(it.title) for it in items if not it.topic}
+    items = [it for it in items if not it.topic or _norm(it.title) not in direct_titles]
 
     stories = cluster_items(items, config.threshold, now)
     assign_story_ids(stories, state["stories"])
@@ -85,6 +118,10 @@ def run(config_path: Path, data_dir: Path, now: datetime, session) -> int:
     state["og_cache"] = {k: v for k, v in state["og_cache"].items() if k in links}
     save_state(data_dir / "state.json", state)
     return 0
+
+
+def _norm(title: str) -> str:
+    return " ".join(title.lower().split())
 
 
 def _write_status(data_dir: Path, now: datetime, status: dict, items) -> None:
