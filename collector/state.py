@@ -8,7 +8,7 @@ from pathlib import Path
 from .models import Item
 from .output import iso, write_json_atomic
 
-EMPTY = {"http_cache": {}, "first_seen": {}, "og_cache": {}, "items": {}, "stories": {}}
+EMPTY = {"http_cache": {}, "first_seen": {}, "og_cache": {}, "icon_cache": {}, "items": {}, "stories": {}}
 
 
 def load_state(path: Path) -> dict:

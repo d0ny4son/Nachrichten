@@ -26,6 +26,7 @@ function ctx() {
     now,
     read: settings.read,
     sources: data?.sources || {},
+    icons: data?.icons || {},
     generatedAt: gen,
     hangs: gen ? now - new Date(gen) > HANG_MS : false,
     offline: navigator.onLine === false || Boolean(loaded?.stale),

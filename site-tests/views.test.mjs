@@ -176,3 +176,8 @@ test("top rubric: nav says Top and list has a heading", () => {
   assert.ok(html.includes('<h2 class="sec">Top-Meldungen</h2>'));
   assert.ok(aktuellView(DATA.stories, "inland", ctx).includes('<h2 class="sec">Top-Meldungen Inland</h2>'));
 });
+
+test("uses the discovered icon address when known", () => {
+  const html = storyCard(DATA.stories[1], DATA.sources, { ...ctx, icons: { "https://example.org": "https://cdn.example.org/icon32.png" } });
+  assert.match(html, /<img class="favicon" src="https:\/\/cdn\.example\.org\/icon32\.png"/);
+});
